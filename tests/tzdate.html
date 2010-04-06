@@ -1,0 +1,194 @@
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title></title>
+
+<script type="text/javascript" src="/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="/fleegix_js/fleegix.js"></script>
+<script type="text/javascript" src="/timezone-js/src/date.js"></script>
+<script type="text/javascript" src="/timezone-js/src/tzdate.js"></script>
+
+<script type="text/javascript">
+
+var setUpPage = function () {
+  timezoneJS.timezone.zoneFileBasePath = '/tz';
+  timezoneJS.timezone.defaultZoneFile = ['asia', 'backward', 'northamerica', 'southamerica', 'europe'];
+  timezoneJS.timezone.init({async: false});
+  timezoneJS.overrideDate("Europe/Berlin");
+  setUpPageStatus = 'complete';
+};
+
+var test_parse = function() {
+  var val;
+  var cases = [
+    ["1970-01-01T00:00:00.000Z",0],  
+    ["1970-01-01Z",0],  
+    ["1970-01Z",0],  
+    ["1970Z",0],  
+    ["1970-01-01T01:00:00.000+01:00",0],  
+  ];
+  for(var i in cases) {
+    var str = cases[i][0];
+    var correct = cases[i][1];
+    var val = Date.parse(str);
+    assertEquals(str, correct, val);
+  }
+};
+
+var test_parseLT = function() {
+  var val;
+  var cases = [
+    ["1970-01-01T00:00:00.000Z","Thu Jan 1 1970 01:00:00 GMT+0100 (CEST)"],  
+    ["1970-01-01Z","Thu Jan 1 1970 01:00:00 GMT+0100 (CEST)"],  
+    ["1970-01Z","Thu Jan 1 1970 01:00:00 GMT+0100 (CEST)"],  
+    ["1970Z","Thu Jan 1 1970 01:00:00 GMT+0100 (CEST)"],  
+    ["1970-01-01T01:00:00.000+01:00","Thu Jan 1 1970 01:00:00 GMT+0100 (CEST)"],  
+  ];
+  for(var i in cases) {
+    var str = cases[i][0];
+    var correct = cases[i][1];
+    var val = Date(str,"Europe/Berlin");
+    assertEquals(str, correct, val);
+  }
+};
+
+var test_dateStandardBehaviour = function() {
+  var d = new Date();
+  assertEquals("new Date() returns object", "object", typeof d);
+  assertTrue("new Date() instanceof date", d instanceof Date);
+  assertEquals("(new Date()).constructor === Date", Date, d.constructor);
+  assertEquals("(new Date()).constructor.name === 'Date'", "Date", d.constructor.name);
+  var d = Date();
+  assertEquals("Date() returns string", "string", typeof d);
+  var d = new Date(0);
+  assertEquals("new Date(0).getTime() === 0",0,d.getTime());
+  assertEquals("new Date(0).valueOf() === 0",0,d.valueOf());
+  //the overriden Date.parse function doesn't understand the format produced by Date.toString, yet
+  //assertEquals("Date.parse(Date(0).toString()) === 0",0,Date.parse(d.toString()));
+  assertEquals("Date.parse(Date(0).toUTCString()) === 0",0,Date.parse(d.toString()));
+  assertEquals("Date.parse(Date(0).toISOString()) === 0",0,Date.parse(d.toString()));
+}
+
+
+var test_americaChicagoDST = function () {
+    var testDstLeap = function (arr) {
+      var expectedArr = [360, 300, 300, 360];
+      var dt;
+      var actual;
+      var expected;
+      for (var i = 0; i < arr.length; i++) {
+        dt = new Date(arr[i], 'America/Chicago');
+        actual = dt.getTimezoneOffset();
+        expected = expectedArr[i];
+        assertEquals(expected, actual);
+      }
+    };
+    testDstLeap(['2004-04-04', '2004-04-05', '2004-10-31', '2004-11-01']);
+    testDstLeap(['2005-04-03', '2005-04-04', '2005-10-30', '2005-10-31']);
+    testDstLeap(['2006-04-02', '2006-04-03', '2006-10-29', '2006-10-30']);
+    // 2007 -- new DST rules start here
+    testDstLeap(['2007-03-11', '2007-03-12', '2007-11-04', '2007-11-05']);
+    testDstLeap(['2008-03-09', '2008-03-10', '2008-11-02', '2008-11-03']);
+    testDstLeap(['2009-03-08', '2009-03-09', '2009-11-01', '2009-11-02']);
+    testDstLeap(['2010-03-14', '2010-03-15', '2010-11-07', '2010-11-08']);
+    testDstLeap(['2011-03-13', '2011-03-14', '2011-11-06', '2011-11-07']);
+};
+
+var test_SaoPaulo = function () {
+  // Source: http://www.timeanddate.com/worldclock/clockchange.html?n=233
+  // Standard: GMT-3 from Feb 16 - Nov 1
+  // Daylight: GMT-2 from Nov 2 - Feb 16
+  var dt;
+  // 2008
+  dt = new Date('2008-02-17T01:59', 'America/Sao_Paulo');
+  assertEquals('2008-02-17T01:59',120, dt.getTimezoneOffset());
+  dt = new Date('2008-02-17T02:00', 'America/Sao_Paulo');
+  assertEquals('2008-02-17T02:00',180, dt.getTimezoneOffset());
+  dt = new Date('2008-10-19T02:59', 'America/Sao_Paulo');
+  assertEquals('2008-10-19T02:59',180, dt.getTimezoneOffset());
+  dt = new Date('2008-10-19T03:00', 'America/Sao_Paulo');
+  assertEquals('2008-10-19T03:00',120, dt.getTimezoneOffset());
+};
+
+var test_exactSwitchingTime = function () {
+  var dt;
+  // this is still summer time, CEST = UTC+0200
+  dt = new Date('2009-10-25T00:59:59', 'Europe/Berlin');
+  assertEquals("before switch from DST",-120, dt.getTimezoneOffset());
+  // this is CET
+  dt = new Date('2009-10-25T01:00:00', 'Europe/Berlin');
+  assertEquals("after switch from DST",-60, dt.getTimezoneOffset());
+
+  dt = new Date('2010-03-28T00:59:59', 'Europe/Berlin');
+  assertEquals("before switch to DST",-60, dt.getTimezoneOffset());
+  dt = new Date('2010-03-28T01:00:00', 'Europe/Berlin');
+  assertEquals("after switch to DST",-120, dt.getTimezoneOffset());
+  assertEquals("after switch to DST, hour",3, dt.getHours());
+}
+
+/*
+var test_twoSummerTimes = function () {
+  var dt;
+  // in 1942, Portugal had a summer time and additionally a midsummer
+  // time:
+        / *
+        Rule    Port    1940    1941    -       Oct      5      23:00s  0       -
+        Rule    Port    1941    only    -       Apr      5      23:00s  1:00    S
+        Rule    Port    1942    1945    -       Mar     Sat>=8  23:00s  1:00    S
+        Rule    Port    1942    only    -       Apr     25      22:00s  2:00    M # Midsummer
+        Rule    Port    1942    only    -       Aug     15      22:00s  1:00    S
+        Rule    Port    1942    1945    -       Oct     Sat>=24 23:00s  0       -
+        * /
+  dt = new Date('03/14/1942 22:59:59', 'Europe/Lisbon');
+  assertEquals("before switch to summer time",0, dt.getTimezoneOffset());
+  dt = new Date('03/15/1942 00:00:00', 'Europe/Lisbon');
+  assertEquals("after switch to summer time",-60, dt.getTimezoneOffset());
+  dt = new Date('04/25/1942 22:59:59', 'Europe/Lisbon');
+  assertEquals("before switch to midsummer time",-60, dt.getTimezoneOffset());
+  dt = new Date('04/26/1942 00:00:00', 'Europe/Lisbon');
+  assertEquals("after switch to midsummer time",-120, dt.getTimezoneOffset());
+  // switch is at 22:00 standard time == 00:00 midsummer time,
+  // hour 23:00-23:59 occurs twice
+  dt = new Date('08/15/1942 22:59:59', 'Europe/Lisbon');
+  assertEquals("before switch from midsummer time",-120, dt.getTimezoneOffset());
+  dt = new Date('08/16/1942 00:00:00', 'Europe/Lisbon');
+  assertEquals("after switch from midsummer time",-60, dt.getTimezoneOffset());
+  dt = new Date('10/24/1942 22:59:59', 'Europe/Lisbon');
+  assertEquals("before switch from summer time",-60, dt.getTimezoneOffset());
+  dt = new Date('10/25/1942 00:00:00', 'Europe/Lisbon');
+  assertEquals("after switch from summer time",0, dt.getTimezoneOffset());
+
+  // and some impossible dates, see comments in test_exactSwitchingTime
+
+  // impossible
+  dt = new Date('03/14/1942 23:00:00', 'Europe/Lisbon');
+  assertEquals("impossible date during switch to summer time, offset",0, dt.getTimezoneOffset());
+  assertEquals("impossible date during switch to summer time, hours",22, dt.getHours());
+  // impossible
+  dt = new Date('04/25/1942 23:00:00', 'Europe/Lisbon');
+  assertEquals("impossible date during switch to midsummer time, offset",-60, dt.getTimezoneOffset());
+  assertEquals("impossible date during switch to midsummer time, hours",21, dt.getHours());
+
+} */
+
+
+
+</script>
+
+
+<style type="text/css">
+
+* {
+  font-family: "Lucida Grande", "Verdana", sans-serif;
+}
+
+</style>
+
+</head>
+  <body>
+  </body>
+</html>
