@@ -322,8 +322,8 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
         Date.prototype.setMonth = function setMonth() {
             setLocalTimeParts.call(this,Date.prototype.setUTCMonth,arguments);
         };
-        Date.prototype.setDay = function setDay() {
-            setLocalTimeParts.call(this,Date.prototype.setUTCDay,arguments);
+        Date.prototype.setDate = function setDate() {
+            setLocalTimeParts.call(this,Date.prototype.setUTCDate,arguments);
         };
         Date.prototype.setHours = function setHours() {
             setLocalTimeParts.call(this,Date.prototype.setUTCHours,arguments);
