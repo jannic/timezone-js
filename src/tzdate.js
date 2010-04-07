@@ -95,8 +95,9 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
     // Warning: The returned value is cached, so it must not be modified
     // by the calling function. Therefore, don't return it to the outside.
     var getLocal = function() {
-        if(!this._localDate) {
+        if(!this._localDate || this._localDateValid !== this.getTime()) {
             this._localDate=new oDate(this.getTime()-this.getTimezoneOffset()*60*1000);
+            this._localDateValid = this.getTime();
         }
         return this._localDate;
     };
@@ -113,6 +114,10 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
     }
 
     var getZoneInfo = function(date) {
+        if(date._tz && date._tz.validAt !== undefined && date._tz.validAt !== date.getTime()) {
+            // zone cache is invalid
+            date._tz = date._tz.id;
+        }
         if(typeof date._tz === 'string') {
             // getZoneInfo calls into zoneinfoProvider, which may call back into
             // the date object. To prevent recursion, the following rules
@@ -126,6 +131,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
             date._tz = zoneinfoProvider.getTzInfo(date, date._tz, true);
             if(date._tz) {
                 date._tz.id = tz;
+                date._tz.validAt = date.getTime();
             }
         }
         return date._tz;
@@ -139,6 +145,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
     var convertFromLocal = function(localDate) {
         var tzinfo = zoneinfoProvider.getTzInfo(localDate, localDate._tz, false);
         tzinfo.id = localDate._tz;
+        tzinfo.validAt = localDate.getTime();
         var utcDate = new oDate(localDate.getTime()+tzinfo.tzOffset*60*1000);
         utcDate._tz = tzinfo;
         return utcDate;
@@ -205,19 +212,24 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
                 isLocal = false;
             }
 
+            internalDate.constructor = Date;
+
             internalDate._tz=tz;
             if(isLocal) { // internalDate still contains local time - apply offset
                 internalDate = convertFromLocal(internalDate);
+                internalDate.constructor = Date;
             }
             
-            internalDate.constructor = Date;
-
             if ( !(this instanceof arguments.callee) ) {
                   // not called as a constructor -> return string
                   return internalDate.toString();
             }
             return internalDate;
             //return this.toString();
+        };
+
+        Date.setDefaultTimezone = function (newDefaultTimezone) {
+            defaultTimezone = newDefaultTimezone;
         };
 
         // make sure that (new Date()) instanceof Date does return true
