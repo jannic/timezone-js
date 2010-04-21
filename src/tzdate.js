@@ -170,10 +170,17 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
     }
 
     var overrideDate = function(defaultTimezone) {
-        // replace the Date constructor
-        // (when called with 'new', this function will return an instance of oDate,
-        // ie. a native javascript date object)
-        Date = function Date() {
+        /* replace the Date constructor
+         * (when called with 'new', this function will return an instance of oDate,
+         * ie. a native javascript date object)
+         *
+         * Nested definition is necessary, as IE has a bug which causes
+         * Date = function Date() {...} to create a local symbol Date instead of
+         * redefining the global one. 
+         * See http://dmitrysoshnikov.com/ecmascript/chapter-5-functions/#nfe-and-jscript
+         * for details.
+         */
+        Date = (function() { return function Date() {
             var args = Array.prototype.slice.call(arguments);
             var internalDate;
             var tz = defaultTimezone;
@@ -226,7 +233,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
             }
             return internalDate;
             //return this.toString();
-        };
+        }})();
 
         Date.setDefaultTimezone = function (newDefaultTimezone) {
             defaultTimezone = newDefaultTimezone;
