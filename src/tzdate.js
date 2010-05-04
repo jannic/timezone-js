@@ -180,7 +180,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
          * See http://dmitrysoshnikov.com/ecmascript/chapter-5-functions/#nfe-and-jscript
          * for details.
          */
-        Date = (function() { return function Date() {
+        var D = (function() { return function Date() {
             var args = Array.prototype.slice.call(arguments);
             var internalDate;
             var tz = defaultTimezone;
@@ -201,7 +201,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
                 // make argument 'primitive'
                 var val = ToPrimitive(args[0]);
                 if(typeof val === 'string') {
-                    var parsedVal = Date.parse(val);
+                    var parsedVal = D.parse(val);
                     if(isNaN(parsedVal)) { // not a time string - interpret as timezone instead
                         internalDate = new oDate();
                         isLocal = false;
@@ -218,13 +218,12 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
                 internalDate = new oDate(); // current time is current time - doesn't depend on TZ
                 isLocal = false;
             }
-
-            internalDate.constructor = Date;
+            internalDate.constructor = D;
 
             internalDate._tz=tz;
             if(isLocal) { // internalDate still contains local time - apply offset
                 internalDate = convertFromLocal(internalDate);
-                internalDate.constructor = Date;
+                internalDate.constructor = D;
             }
             
             if ( !(this instanceof arguments.callee) ) {
@@ -234,6 +233,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
             return internalDate;
             //return this.toString();
         }})();
+	Date = D;
 
         Date.setDefaultTimezone = function (newDefaultTimezone) {
             defaultTimezone = newDefaultTimezone;

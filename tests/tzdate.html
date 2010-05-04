@@ -61,7 +61,7 @@ var test_dateStandardBehaviour = function() {
   assertEquals("new Date() returns object", "object", typeof d);
   assertTrue("new Date() instanceof date", d instanceof Date);
   assertEquals("(new Date()).constructor === Date", Date, d.constructor);
-  assertEquals("(new Date()).constructor.name === 'Date'", "Date", d.constructor.name);
+//  assertEquals("(new Date()).constructor.name === 'Date'", "Date", d.constructor.name);
   var d = Date();
   assertEquals("Date() returns string", "string", typeof d);
   var d = new Date(0);
