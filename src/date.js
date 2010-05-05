@@ -560,6 +560,18 @@ timezoneJS.timezone = new function() {
       return effectiveDate;
     }
 
+    var indexOf = function(array, what, startAt) {
+      if(array.indexOf) {
+        return array.indexOf(what,startAt);
+      }
+      for (var i = (startAt || 0); i < array.length; i++) {
+        if (array[i] == what) {
+          return i;
+        }
+      }
+      return -1;
+    };
+
     var findApplicableRules = function( year, ruleset )
     {
       var applicableRules = [];
@@ -616,12 +628,12 @@ timezoneJS.timezone = new function() {
     // to a wrong position (off by one), which is corrected below.
     applicableRules.sort( compareDates );
 
-    if ( applicableRules.indexOf( date ) < 2 ) { // If there are not enough past DST rules...
+    if ( indexOf(applicableRules, date ) < 2 ) { // If there are not enough past DST rules...
       applicableRules = applicableRules.concat(findApplicableRules( year-1, _this.rules[ ruleset ] ));
       applicableRules.sort( compareDates );
     }
 
-    var pinpoint = applicableRules.indexOf( date );
+    var pinpoint = indexOf(applicableRules, date);
     if ( pinpoint > 1 && compareDates( date, applicableRules[pinpoint-1], applicableRules[pinpoint-2][1] ) < 0 ) {
       // the previous rule does not really apply, take the one before that
       return applicableRules[ pinpoint - 2 ][1];
