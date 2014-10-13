@@ -323,7 +323,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
 
 
         Date.prototype.getFullYear = function getFullYear() { return getLocal.call(this).getUTCFullYear(); };
-        Date.prototype.getYear = function getYear() { return getLocal.call(this).getUTCYear(); };
+        Date.prototype.getYear = function getYear() { return getLocal.call(this).getUTCFullYear() - 1900; };
         Date.prototype.getMonth = function getMonth() { return getLocal.call(this).getUTCMonth(); };
         Date.prototype.getDate = function getDate() { return getLocal.call(this).getUTCDate(); };
         Date.prototype.getDay = function getDay() { return getLocal.call(this).getUTCDay(); };
@@ -335,8 +335,9 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
         Date.prototype.setFullYear = function setFullYear() {
             setLocalTimeParts.call(this,Date.prototype.setUTCFullYear,arguments);
         };
-        Date.prototype.setYear = function setYear() {
-            setLocalTimeParts.call(this,Date.prototype.setUTCYear,arguments);
+        Date.prototype.setYear = function setYear(truncatedYear) {
+            var year = truncatedYear + 1900;
+            setLocalTimeParts.call(this,Date.prototype.setUTCFullYear,[year]);
         };
         Date.prototype.setMonth = function setMonth() {
             setLocalTimeParts.call(this,Date.prototype.setUTCMonth,arguments);
