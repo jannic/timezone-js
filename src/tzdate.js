@@ -210,7 +210,7 @@ timezoneJS.overrideDate = (function() { // embed in function literal to create s
                         internalDate = new oDate(parsedVal); // assume the string contained full TZ info
                         isLocal = false;
                     }
-                } else if(typeof val === 'number') {
+                } else {
                     internalDate = new oDate(val);
                     isLocal = false;
                 }
